@@ -40,8 +40,9 @@ public final class WebCrawlerMain {
 
     if (config.getResultPath().isEmpty()) {
       // write to console
-      Writer consoleWriter = new OutputStreamWriter(System.out);
-      resultWriter.write(consoleWriter);
+      try (Writer consoleWriter = new OutputStreamWriter(System.out)) {
+        resultWriter.write(consoleWriter);
+      }
     } else {
       // write to JSON file
       resultWriter.write(Paths.get(config.getResultPath()));

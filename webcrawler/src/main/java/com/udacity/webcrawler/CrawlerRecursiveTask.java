@@ -40,10 +40,6 @@ public class CrawlerRecursiveTask extends RecursiveTask<Boolean> {
             return false;
         }
 
-        if (visitedUrls.contains(startUrl)) {
-            return false;
-        }
-
         if (ignoredUrls != null) {
             for (Pattern ignoredUrl : ignoredUrls) {
                 if (ignoredUrl.matcher(startUrl).matches()) {
@@ -52,7 +48,10 @@ public class CrawlerRecursiveTask extends RecursiveTask<Boolean> {
             }
         }
 
-        visitedUrls.add(startUrl);
+        if (!visitedUrls.add(startUrl)) {
+            return false;
+        }
+
         PageParser.Result result = parserFactory.get(startUrl).parse();
 
         for (ConcurrentMap.Entry<String, Integer> entry : result.getWordCounts().entrySet()) {
