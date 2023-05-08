@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +29,7 @@ final class ParallelWebCrawler implements WebCrawler {
   private final int popularWordCount;
   private final ForkJoinPool pool;
   private final int maxDepth;
+  private final List<Pattern> ignoredUrls;
   private final PageParserFactory parserFactory;
 
   @Inject
@@ -37,6 +39,7 @@ final class ParallelWebCrawler implements WebCrawler {
           @PopularWordCount int popularWordCount,
           @TargetParallelism int threadCount,
           @MaxDepth int maxDepth,
+          @IgnoredUrls List<Pattern> ignoredUrls,
           PageParserFactory parserFactory) {
     this.clock = clock;
     this.timeout = timeout;
@@ -44,6 +47,7 @@ final class ParallelWebCrawler implements WebCrawler {
     this.pool = new ForkJoinPool(Math.min(threadCount, getMaxParallelism()));
     this.maxDepth = maxDepth;
     this.parserFactory = parserFactory;
+    this.ignoredUrls = ignoredUrls;
   }
 
   @Override
@@ -53,7 +57,7 @@ final class ParallelWebCrawler implements WebCrawler {
     ConcurrentSkipListSet<String> visitedUrls = new ConcurrentSkipListSet<>();
 
     for (String startUrl : startingUrls) {
-      pool.invoke(new CrawlerRecursiveTask(startUrl, timeToStop, maxDepth, counts, visitedUrls));
+      pool.invoke(new CrawlerRecursiveTask(startUrl, timeToStop, maxDepth, counts, visitedUrls, clock, parserFactory, ignoredUrls));
     }
 
     if (!counts.isEmpty()) {

@@ -3,6 +3,7 @@ package com.udacity.webcrawler.profiler;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +32,11 @@ final class ProfilerImpl implements Profiler {
   public <T> T wrap(Class<T> klass, T delegate) {
     Objects.requireNonNull(klass);
 
+    // The interface contains should contain @Profiled method
+    if (!isValidProfilerInterface(klass)) {
+      throw new IllegalArgumentException("Class/Interface should have at least one @Profiled method");
+    }
+
     ProfilingMethodInterceptor interceptor = new ProfilingMethodInterceptor(clock, delegate, state, startTime);
     Object proxy = Proxy.newProxyInstance(
             ProfilerImpl.class.getClassLoader(),
@@ -39,6 +45,18 @@ final class ProfilerImpl implements Profiler {
     );
 
     return (T) proxy;
+  }
+
+  private boolean isValidProfilerInterface(Class<?> clazz) {
+    Method[] methods = clazz.getDeclaredMethods();
+
+    for (Method method : methods) {
+      if (method.isAnnotationPresent(Profiled.class)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override

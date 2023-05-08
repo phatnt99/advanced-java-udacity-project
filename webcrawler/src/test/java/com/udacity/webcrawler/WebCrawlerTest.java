@@ -3,6 +3,7 @@ package com.udacity.webcrawler;
 import com.google.inject.Guice;
 import com.udacity.webcrawler.json.CrawlResult;
 import com.udacity.webcrawler.json.CrawlerConfiguration;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,10 +22,17 @@ public final class WebCrawlerTest {
   @Inject
   private WebCrawler crawler;
 
-  private static final String DATA_DIR = System.getProperty("testDataDir");
+  private static String DATA_DIR;
+
+  @BeforeAll
+  static void setup() {
+    System.setProperty("testDataDir", System.getProperty("user.dir") + "/src/test/data");
+    DATA_DIR = System.getProperty("testDataDir");
+    System.setProperty("crawlerImplementations", "com.udacity.webcrawler.SequentialWebCrawler-com.udacity.webcrawler.ParallelWebCrawler");
+  }
 
   static Stream<Class<?>> provideTestParameters() throws Exception {
-    String[] names = System.getProperty("crawlerImplementations").split("\\s+");
+    String[] names = System.getProperty("crawlerImplementations").split("-");
     List<Class<?>> classes = new ArrayList<>();
     for (String name : names) {
       classes.add(Class.forName(name.strip()));

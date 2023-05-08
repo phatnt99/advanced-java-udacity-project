@@ -22,12 +22,15 @@ public class CrawlerRecursiveTask extends RecursiveTask<Boolean> {
     protected List<Pattern> ignoredUrls;
     protected PageParserFactory parserFactory;
 
-    public CrawlerRecursiveTask(String startUrl, Instant timeToStop, Integer maxDepth, ConcurrentMap<String, Integer> counts, ConcurrentSkipListSet<String> visitedUrls) {
+    public CrawlerRecursiveTask(String startUrl, Instant timeToStop, Integer maxDepth, ConcurrentMap<String, Integer> counts, ConcurrentSkipListSet<String> visitedUrls, Clock clock, PageParserFactory parserFactory, List<Pattern> ignoredUrls) {
         this.startUrl = startUrl;
         this.timeToStop = timeToStop;
         this.maxDepth = maxDepth;
         this.counts = counts;
         this.visitedUrls = visitedUrls;
+        this.clock = clock;
+        this.parserFactory = parserFactory;
+        this.ignoredUrls = ignoredUrls;
     }
 
     @Override
@@ -41,9 +44,11 @@ public class CrawlerRecursiveTask extends RecursiveTask<Boolean> {
             return false;
         }
 
-        for (Pattern ignoredUrl : ignoredUrls) {
-            if (ignoredUrl.matcher(startUrl).matches()) {
-                return false;
+        if (ignoredUrls != null) {
+            for (Pattern ignoredUrl : ignoredUrls) {
+                if (ignoredUrl.matcher(startUrl).matches()) {
+                    return false;
+                }
             }
         }
 
@@ -57,7 +62,7 @@ public class CrawlerRecursiveTask extends RecursiveTask<Boolean> {
         List<CrawlerRecursiveTask> subTasks = new ArrayList<>();
 
         for (String link : result.getLinks()) {
-            subTasks.add(new CrawlerRecursiveTask(link, timeToStop, maxDepth, counts, visitedUrls));
+            subTasks.add(new CrawlerRecursiveTask(link, timeToStop, maxDepth - 1, counts, visitedUrls, clock, parserFactory, ignoredUrls));
         }
 
         invokeAll(subTasks);
